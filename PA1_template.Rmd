@@ -7,19 +7,53 @@ output:
 
 
 ## Loading and preprocessing the data
-
+activity <- read.csv("~/Coursera/Data science/Working directory/05 - Reproducible Research/activity.csv")
+activity$date <- ymd(as.character(activity$date))
+activity$HMS <- hms(paste(activity$interval%/%100,":",activity$interval-(activity$interval%/%100)*100,":",0))
 
 
 ## What is mean total number of steps taken per day?
-
+step_by_day <- aggregate(steps~date  ,data= activity, sum)
+knitr::kable(summary(step_by_day))
+ggplot(step_by_day,aes(date))+geom_histogram(aes(steps),bins = 30)
 
 
 ## What is the average daily activity pattern?
+average_step_by_5mn <- aggregate(steps ~ interval ,data= activity, mean)
+ggplot(average_step_by_5mn,aes(x = interval/100,y= steps))+geom_line()+
+        labs (title= "Average number of step by 5mn interval", x="5mn interval (in hour)")
 
-
+max_average_number_of_steps <- average_step_by_5mn[which(average_step_by_5mn$steps == max(average_step_by_5mn$steps, na.rm = TRUE)), ]
 
 ## Imputing missing values
+total_rows_with_NAs <-  nrow(activity)-sum(complete.cases(activity))
+activity$modify<- is.na(activity$steps)
+activity <-merge(activity,average_step_by_5mn,by = "interval" )
+activity$steps.x[activity$modify] <- activity$steps.y[activity$modify]
+activity_new<- data.frame(interval=activity$interval,steps = activity$steps.x,date=as.Date(activity$date))
+knitr::kable(summary(activity_new))
+knitr::kable(head(activity_new))
 
+total_step_by_day <- aggregate(steps ~ date ,data= activity_new, sum)
+ggplot(total_step_by_day,aes(date))+geom_histogram(aes(steps),bins = 30)
 
+mean_before_correction <- mean(step_by_day$steps)
+mean_after_correction <-mean(total_step_by_day$steps)
+median_before_correction <- median(step_by_day$steps)
+median_after_correction <- median(total_step_by_day$steps)
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+week_days <- c("lundi","mardi","mercredi","jeudi","vendredi")
+weekend_days <- c("samedi","dimanche")
+day_type <- weekdays(activity_new$date) %in% week_days
+activity_new$day_type[day_type]= "weekday" 
+activity_new$day_type[!(day_type)]= "weekend"
+activity_new$day_type <- as.factor(activity_new$day_type)
+knitr::kable(head(activity_new))
+
+average_step_by_5mn_daytype <- aggregate(steps ~ interval + day_type ,data= activity_new, mean)
+ggplot(data = average_step_by_5mn_daytype, aes(x= interval/100, y = steps))+geom_line()+facet_grid(day_type~.)+
+        labs (title= "Average number of step by interval and day type", x="5mn interval (in hour)")
+        
+        
