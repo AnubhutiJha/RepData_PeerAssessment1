@@ -44,8 +44,8 @@ median_after_correction <- median(total_step_by_day$steps)
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-week_days <- c("lundi","mardi","mercredi","jeudi","vendredi")
-weekend_days <- c("samedi","dimanche")
+week_days <- c("monday","tuesday","wednesday","thrusday","friday")
+weekend_days <- c("saturday","sunday")
 day_type <- weekdays(activity_new$date) %in% week_days
 activity_new$day_type[day_type]= "weekday" 
 activity_new$day_type[!(day_type)]= "weekend"
